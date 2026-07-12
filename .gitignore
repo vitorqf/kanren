@@ -5,3 +5,6 @@ coverage.out
 # Local dogfooding board — kanren run on its own repo, not part of the release
 /.kanren.yml
 /cards/
+
+# GoReleaser build output
+/dist/

@@ -8,31 +8,20 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  goreleaser:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        goos: [linux, darwin, windows]
-        goarch: [amd64, arm64]
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # GoReleaser needs full history for the changelog
 
       - uses: actions/setup-go@v5
         with:
           go-version: "1.24"
 
-      - name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
-        env:
-          GOOS: ${{ matrix.goos }}
-          GOARCH: ${{ matrix.goarch }}
-        run: |
-          ext=""
-          [ "$GOOS" = "windows" ] && ext=".exe"
-          out="kanren-${GITHUB_REF_NAME}-${GOOS}-${GOARCH}${ext}"
-          go build -ldflags "-s -w -X main.version=${GITHUB_REF_NAME}" -o "$out" ./cmd/kanren
-          echo "ASSET=$out" >> "$GITHUB_ENV"
-
-      - name: Attach to release
-        uses: softprops/action-gh-release@v2
+      - uses: goreleaser/goreleaser-action@v6
         with:
-          files: ${{ env.ASSET }}
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

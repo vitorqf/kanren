@@ -31,27 +31,44 @@ kanren ls --status doing --tag urgent  # query like a database
 ## Install
 
 `kanren` is a single binary, like `git`. Install it once and it works from any
-folder.
+folder. Pick whichever method suits your system; all of them install the same
+binary from the [latest release](../../releases/latest).
 
-**Download a prebuilt binary** from the [latest release](../../releases/latest).
-Pick the file for your system, make it runnable, and move it onto your `PATH`:
-
-```sh
-# example: Apple Silicon Mac (darwin-arm64) — swap for your OS/arch
-curl -L -o kanren https://github.com/vitorqf/kanren/releases/latest/download/kanren-v0.1.0-darwin-arm64
-chmod +x kanren
-sudo mv kanren /usr/local/bin/
-```
-
-Files are named `kanren-<version>-<os>-<arch>`: `darwin-arm64` (Apple Silicon),
-`darwin-amd64` (Intel Mac), `linux-amd64`, `linux-arm64`,
-`windows-amd64.exe`, `windows-arm64.exe`.
-
-**Or, with Go installed:**
+**Go** (any platform, if you have Go):
 
 ```sh
 go install github.com/vitorqf/kanren/cmd/kanren@latest
 ```
+
+**Linux packages** — download the file for your distro and arch, then install:
+
+```sh
+# Debian / Ubuntu (.deb)
+sudo dpkg -i kanren_*_linux_amd64.deb
+# Fedora / RHEL (.rpm)
+sudo rpm -i kanren_*_linux_amd64.rpm
+# Alpine (.apk)
+sudo apk add --allow-untrusted kanren_*_linux_amd64.apk
+```
+
+**Tarball / zip** (macOS, Linux, Windows) — extract and put the binary on your
+`PATH`:
+
+```sh
+# example: Apple Silicon Mac — swap for your OS/arch
+curl -L -o kanren.tar.gz \
+  https://github.com/vitorqf/kanren/releases/latest/download/kanren_0.1.0_darwin_arm64.tar.gz
+tar -xzf kanren.tar.gz
+sudo mv kanren /usr/local/bin/
+```
+
+Assets are named `kanren_<version>_<os>_<arch>.<ext>`, with `<os>_<arch>` one of
+`darwin_arm64` (Apple Silicon), `darwin_amd64` (Intel Mac), `linux_amd64`,
+`linux_arm64`, `windows_amd64`, `windows_arm64`. Checksums are in
+`checksums.txt`.
+
+> Homebrew (`brew install`) and Scoop are planned; they need small companion
+> repos and will land in a later release.
 
 ## A board is a folder
 

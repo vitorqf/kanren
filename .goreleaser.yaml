@@ -1,0 +1,56 @@
+# GoReleaser: compile once, repackage many. One build feeds tarballs, Linux
+# packages (deb/rpm/apk), and checksums, all attached to the GitHub Release.
+# Validate locally with:  goreleaser check  &&  goreleaser release --snapshot --clean
+version: 2
+
+project_name: kanren
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - main: ./cmd/kanren
+    binary: kanren
+    env:
+      - CGO_ENABLED=0
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+    ldflags:
+      - -s -w -X main.version={{ .Version }}
+
+archives:
+  - formats: [tar.gz]
+    name_template: "kanren_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    # Windows users expect a zip, not a tarball.
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+nfpms:
+  - id: linux-packages
+    package_name: kanren
+    vendor: vitorqf
+    maintainer: vitorqf <vitorqf@users.noreply.github.com>
+    homepage: https://github.com/vitorqf/kanren
+    description: Plain-text, git-backed kanban. Per-card markdown files, CLI and local web board.
+    license: MIT
+    formats: [deb, rpm, apk]
+    bindir: /usr/bin
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^ci:"
+      - "^chore:"
+
+release:
+  github:
+    owner: vitorqf
+    name: kanren
