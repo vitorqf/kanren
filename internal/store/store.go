@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/goccy/go-yaml"
 	"github.com/vitor/kanren/internal/card"
@@ -33,6 +34,8 @@ type Store struct {
 	dir      string
 	cfg      Config
 	cards    map[int]card.Card // id -> card
+	files    map[int]string    // id -> filename (basename) it was loaded from
+	dups     map[int][]string  // id -> filenames, when >1 file claims the same id
 	warnings []string          // malformed/skipped files, reported not fatal
 }
 
@@ -79,7 +82,13 @@ func Open(dir string) (*Store, error) {
 		return nil, fmt.Errorf("store: invalid %s: %w", ConfigName, err)
 	}
 
-	s := &Store{dir: dir, cfg: cfg, cards: map[int]card.Card{}}
+	s := &Store{
+		dir:   dir,
+		cfg:   cfg,
+		cards: map[int]card.Card{},
+		files: map[int]string{},
+		dups:  map[int][]string{},
+	}
 	if err := s.index(); err != nil {
 		return nil, err
 	}
@@ -111,7 +120,19 @@ func (s *Store) index() error {
 			s.warnings = append(s.warnings, fmt.Sprintf("%s: %v", e.Name(), err))
 			continue
 		}
+		if prev, seen := s.files[c.ID]; seen {
+			// Second (or later) file claiming an existing id: record every
+			// filename involved so id-based ops can refuse ambiguously.
+			if len(s.dups[c.ID]) == 0 {
+				s.dups[c.ID] = []string{prev}
+			}
+			s.dups[c.ID] = append(s.dups[c.ID], e.Name())
+			s.warnings = append(s.warnings,
+				fmt.Sprintf("duplicate id %d in %v", c.ID, s.dups[c.ID]))
+			continue
+		}
 		s.cards[c.ID] = c
+		s.files[c.ID] = e.Name()
 	}
 	return nil
 }
@@ -125,3 +146,69 @@ func (s *Store) Warnings() []string { return s.warnings }
 
 // Count returns the number of indexed cards.
 func (s *Store) Count() int { return len(s.cards) }
+
+// nextID returns one past the highest indexed id (ids start at 1).
+func (s *Store) nextID() int {
+	max := 0
+	for id := range s.cards {
+		if id > max {
+			max = id
+		}
+	}
+	return max + 1
+}
+
+// Add creates a new card titled title in the leftmost column, assigns it the
+// next free id and today's date, writes it to disk, and returns it (CLI-01).
+func (s *Store) Add(title string) (card.Card, error) {
+	if len(s.cfg.Columns) == 0 {
+		return card.Card{}, fmt.Errorf("store: board has no columns")
+	}
+	c := card.Card{
+		ID:      s.nextID(),
+		Title:   title,
+		Status:  s.cfg.Columns[0],
+		Created: time.Now().Format("2006-01-02"),
+	}
+	if err := s.Save(c); err != nil {
+		return card.Card{}, err
+	}
+	return c, nil
+}
+
+// Get returns the card with the given id. It refuses when the id is claimed by
+// more than one file on disk, naming the offending files (duplicate-id edge).
+func (s *Store) Get(id int) (card.Card, error) {
+	if files := s.dups[id]; len(files) > 0 {
+		return card.Card{}, fmt.Errorf("store: id %d is ambiguous, claimed by %v", id, files)
+	}
+	c, ok := s.cards[id]
+	if !ok {
+		return card.Card{}, fmt.Errorf("store: no card with id %d", id)
+	}
+	return c, nil
+}
+
+// Path returns the absolute file path a card serializes to.
+func (s *Store) Path(c card.Card) string {
+	return filepath.Join(s.dir, s.cfg.CardsDir, card.Filename(c.ID, c.Title))
+}
+
+// Save writes c to disk and updates the in-memory index. The filename derives
+// from the card's id and title, so the written file round-trips through
+// card.Parse identically.
+func (s *Store) Save(c card.Card) error {
+	data, err := c.Marshal()
+	if err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Join(s.dir, s.cfg.CardsDir), 0o755); err != nil {
+		return fmt.Errorf("store: create cards dir: %w", err)
+	}
+	if err := os.WriteFile(s.Path(c), data, 0o644); err != nil {
+		return fmt.Errorf("store: write card %d: %w", c.ID, err)
+	}
+	s.cards[c.ID] = c
+	s.files[c.ID] = card.Filename(c.ID, c.Title)
+	return nil
+}
