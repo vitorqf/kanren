@@ -140,6 +140,21 @@ func (s *Store) index() error {
 // Columns returns the board's columns in left-to-right order.
 func (s *Store) Columns() []string { return s.cfg.Columns }
 
+// CardsDirPath returns the absolute path of the directory holding card files.
+func (s *Store) CardsDirPath() string {
+	return filepath.Join(s.dir, s.cfg.CardsDir)
+}
+
+// Reload re-reads every card file from disk, replacing the in-memory index. Use
+// it after external changes (a CLI edit, a git pull) so the board reflects them.
+func (s *Store) Reload() error {
+	s.cards = map[int]card.Card{}
+	s.files = map[int]string{}
+	s.dups = map[int][]string{}
+	s.warnings = nil
+	return s.index()
+}
+
 // Warnings returns non-fatal problems found while indexing (e.g. malformed
 // card files that were skipped).
 func (s *Store) Warnings() []string { return s.warnings }

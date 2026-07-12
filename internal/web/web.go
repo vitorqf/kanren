@@ -25,13 +25,18 @@ var assetsFS embed.FS
 
 // Server adapts a store to HTTP. Hold mu around every store call.
 type Server struct {
-	mu    sync.Mutex
-	store *store.Store
+	mu       sync.Mutex
+	store    *store.Store
+	hub      *hub
+	cardsDir string
 }
 
-// Handler builds the HTTP routes for a board. Exposed for tests via httptest.
+// Handler builds the HTTP routes for a board and starts watching the cards
+// directory for live reload. Exposed for tests via httptest.
 func Handler(s *store.Store) http.Handler {
-	srv := &Server{store: s}
+	srv := &Server{store: s, hub: newHub(), cardsDir: s.CardsDirPath()}
+	go srv.watch()
+
 	mux := http.NewServeMux()
 
 	// Serve embedded UI assets under /static/ (files live in assets/).
@@ -42,6 +47,7 @@ func Handler(s *store.Store) http.Handler {
 	mux.HandleFunc("GET /api/columns", srv.listColumns)
 	mux.HandleFunc("GET /api/cards", srv.listCards)
 	mux.HandleFunc("POST /api/cards/{id}/move", srv.moveCard)
+	mux.HandleFunc("GET /events", srv.events)
 	return mux
 }
 

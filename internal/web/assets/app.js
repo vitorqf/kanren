@@ -141,5 +141,13 @@ function initTheme() {
   });
 }
 
+// Live reload: the server streams a "reload" event when any card file changes
+// on disk (CLI edit, git pull, or another board's move).
+function initLiveReload() {
+  const es = new EventSource("/events");
+  es.onmessage = () => load();
+}
+
 initTheme();
+initLiveReload();
 load();
