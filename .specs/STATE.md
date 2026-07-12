@@ -25,7 +25,8 @@
 
 ## Handoff
 
-- **Phase**: Tasks (design approved, AD-001/002/003 logged).
-- **Done**: Spec, design, CI/CD scaffold (green), git initialized.
-- **Next**: Approve tasks.md → Execute.
-- **User context**: New to Go — wants teaching sessions during implementation. Web UI must use `impeccable` skill.
+- **Phase**: Execute — Phase 1 (card) + Phase 2 (store) complete.
+- **Done**: T1 codec, T2 slug/filename, T3 init/open/config, T4 add/get/save+dup-id, T5 move/list/misfiled. 30 tests green, golangci-lint clean (installed at `$GOPATH/bin`).
+- **Next**: Phase 3 CLI (T6 router, T7 query+json), then Phase 4 web (T8 server, T9 drag+impeccable, T10 live reload). After T10 → Verifier.
+- **Gotcha learned**: `max`/`min` are Go 1.21+ builtins; revive `redefines-builtin-id` flags shadowing them. Avoid naming vars `max`/`min`.
+- **User context**: New to Go — inline execution with per-concept teaching. Web UI (T9) must use `impeccable` skill.
