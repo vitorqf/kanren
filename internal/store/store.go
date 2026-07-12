@@ -39,6 +39,12 @@ type Store struct {
 	warnings []string          // malformed/skipped files, reported not fatal
 }
 
+// Exists reports whether dir already contains a kanren board.
+func Exists(dir string) bool {
+	_, err := os.Stat(filepath.Join(dir, ConfigName))
+	return err == nil
+}
+
 // Init scaffolds a new board in dir: writes ConfigName with default columns and
 // creates the cards directory. It refuses if a board config already exists,
 // changing nothing (INIT-01, INIT-02).

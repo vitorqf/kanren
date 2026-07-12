@@ -145,6 +145,50 @@ func TestMoveCardPersistsLikeCLI(t *testing.T) {
 	}
 }
 
+// TestCreateCard: POST /api/cards adds a card from the web UI in the requested
+// column, persisting a file identical to a CLI add (web create, WEB-04).
+func TestCreateCard(t *testing.T) {
+	t.Parallel()
+	ts, dir, _ := newBoard(t)
+
+	resp, err := http.Post(ts.URL+"/api/cards", "application/json",
+		strings.NewReader(`{"title":"from the web","status":"doing"}`))
+	if err != nil {
+		t.Fatalf("post create: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("create status = %d, want 201", resp.StatusCode)
+	}
+	var created card.Card
+	if err := json.NewDecoder(resp.Body).Decode(&created); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if created.Title != "from the web" || created.Status != "doing" {
+		t.Errorf("created = %+v, want title/from the web status/doing", created)
+	}
+	// File exists on disk and round-trips (same as a CLI add).
+	onDisk := parseCard(t, filepath.Join(dir, "cards", "0003-from-the-web.md"))
+	if onDisk.Title != "from the web" || onDisk.Status != "doing" {
+		t.Errorf("on disk = %+v", onDisk)
+	}
+}
+
+// TestCreateCardRequiresTitle: an empty title is rejected (web create edge).
+func TestCreateCardRequiresTitle(t *testing.T) {
+	t.Parallel()
+	ts, _, _ := newBoard(t)
+	resp, err := http.Post(ts.URL+"/api/cards", "application/json",
+		strings.NewReader(`{"title":"   "}`))
+	if err != nil {
+		t.Fatalf("post: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Errorf("empty title = %d, want 400", resp.StatusCode)
+	}
+}
+
 // TestMoveInvalidStatus: an invalid target column is rejected (WEB-02 error
 // path).
 func TestMoveInvalidStatus(t *testing.T) {

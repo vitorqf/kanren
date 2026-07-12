@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/http"
 	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/vitor/kanren/internal/store"
@@ -46,9 +47,46 @@ func Handler(s *store.Store) http.Handler {
 	mux.HandleFunc("GET /{$}", srv.index)
 	mux.HandleFunc("GET /api/columns", srv.listColumns)
 	mux.HandleFunc("GET /api/cards", srv.listCards)
+	mux.HandleFunc("POST /api/cards", srv.createCard)
 	mux.HandleFunc("POST /api/cards/{id}/move", srv.moveCard)
 	mux.HandleFunc("GET /events", srv.events)
 	return mux
+}
+
+// createCard adds a card from the web UI so the board is usable without the
+// CLI. Body is JSON {"title":"...","status":"..."}; status is optional and
+// defaults to the leftmost column. Reuses store.Add/Move (WEB-04: identical
+// files to the CLI).
+func (s *Server) createCard(w http.ResponseWriter, r *http.Request) {
+	var body struct {
+		Title  string `json:"title"`
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid JSON body", http.StatusBadRequest)
+		return
+	}
+	if strings.TrimSpace(body.Title) == "" {
+		http.Error(w, "title is required", http.StatusBadRequest)
+		return
+	}
+
+	s.mu.Lock()
+	c, err := s.store.Add(body.Title)
+	if err == nil && body.Status != "" {
+		if mErr := s.store.Move(c.ID, body.Status); mErr == nil {
+			c, _ = s.store.Get(c.ID)
+		}
+	}
+	s.mu.Unlock()
+
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	_ = json.NewEncoder(w).Encode(c)
 }
 
 // index serves the single-page board shell; data arrives via the JSON API.

@@ -90,6 +90,14 @@ func cmdServe(args []string, _, stderr io.Writer) int {
 	if err := fs.Parse(args); err != nil {
 		return 2
 	}
+	// Auto-init so a browser-only user needs no CLI setup: one command works.
+	if !store.Exists(boardDir) {
+		if err := store.Init(boardDir); err != nil {
+			fmt.Fprintf(stderr, "kanren: %v\n", err)
+			return 1
+		}
+		fmt.Fprintln(stderr, "kanren: created a new board here (.kanren.yml, cards/)")
+	}
 	s, code := openStore(stderr)
 	if code != 0 {
 		return code

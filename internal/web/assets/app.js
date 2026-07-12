@@ -43,11 +43,52 @@ function render(columns, cards) {
     } else {
       for (const card of items) list.append(cardEl(card));
     }
-    column.append(list);
+    column.append(list, addRow(col));
     board.append(column);
 
     makeSortable(list);
   }
+}
+
+// addRow builds the inline "+ add card" affordance for a column.
+function addRow(status) {
+  const form = el("form", "add");
+  form.dataset.status = status;
+  const input = el("input", "add-input");
+  input.type = "text";
+  input.placeholder = "+ add card";
+  input.setAttribute("aria-label", `add card to ${status}`);
+  form.append(input);
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const title = input.value.trim();
+    if (!title) return;
+    input.value = "";
+    await create(title, status);
+  });
+  return form;
+}
+
+async function create(title, status) {
+  try {
+    const resp = await fetch("/api/cards", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, status }),
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+    const card = await resp.json();
+    toast(`added #${card.id}`);
+    await load(); // SSE will also fire; explicit load keeps it snappy
+    focusAdd(status); // keep the caret in place for rapid entry
+  } catch (err) {
+    toast(String(err).slice(0, 80), true);
+  }
+}
+
+function focusAdd(status) {
+  const input = document.querySelector(`.add[data-status="${status}"] .add-input`);
+  if (input) input.focus();
 }
 
 function cardEl(card) {
