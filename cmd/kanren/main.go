@@ -38,6 +38,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return cmdMv(rest, stdout, stderr)
 	case "edit":
 		return cmdEdit(rest, stdout, stderr)
+	case "serve":
+		return cmdServe(rest, stdout, stderr)
 	case "help", "-h", "--help":
 		usage(stdout)
 		return 0
@@ -57,6 +59,7 @@ Usage:
   kanren ls [filters]         list cards grouped by column
   kanren mv <id> <status>     move a card to another column
   kanren edit <id>            open a card in $EDITOR
+  kanren serve [--port N]     open the local board in a browser
   kanren version              print version
 `)
 }

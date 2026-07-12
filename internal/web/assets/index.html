@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>kanren</title>
+  <link rel="stylesheet" href="/static/board.css">
+</head>
+<body>
+  <header>
+    <h1>kanren</h1>
+    <span class="sub" id="summary"></span>
+    <span class="spacer"></span>
+    <button id="theme" type="button" aria-label="Toggle theme">theme</button>
+  </header>
+  <main class="board" id="board" aria-live="polite"></main>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="/static/sortable.min.js"></script>
+  <script src="/static/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+/* kanren board — terminal-native, ink-on-paper. Product register, restrained
+   palette with semantic per-column hues. Both themes; system default. */
+
+:root {
+  color-scheme: light dark;
+
+  /* Neutrals tinted toward a cool ink hue (265), never pure #000/#fff. */
+  --bg:        oklch(0.985 0.006 85);
+  --surface:   oklch(0.965 0.008 85);
+  --surface-2: oklch(0.945 0.010 85);
+  --border:    oklch(0.895 0.010 85);
+  --ink:       oklch(0.28 0.020 265);
+  --ink-soft:  oklch(0.50 0.018 265);
+  --ink-faint: oklch(0.64 0.014 265);
+
+  /* Semantic column accents (meaningful, not decorative). */
+  --todo:  oklch(0.62 0.02 265);   /* neutral slate */
+  --doing: oklch(0.72 0.14 70);    /* amber, in flight */
+  --done:  oklch(0.64 0.13 150);   /* green, complete */
+
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --radius: 7px;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1); /* ease-out-quint */
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:        oklch(0.19 0.012 265);
+    --surface:   oklch(0.23 0.014 265);
+    --surface-2: oklch(0.27 0.016 265);
+    --border:    oklch(0.34 0.016 265);
+    --ink:       oklch(0.93 0.012 85);
+    --ink-soft:  oklch(0.74 0.014 85);
+    --ink-faint: oklch(0.58 0.014 265);
+    --todo:  oklch(0.70 0.02 265);
+    --doing: oklch(0.78 0.13 70);
+    --done:  oklch(0.72 0.13 150);
+  }
+}
+
+:root[data-theme="light"] {
+  --bg: oklch(0.985 0.006 85); --surface: oklch(0.965 0.008 85);
+  --surface-2: oklch(0.945 0.010 85); --border: oklch(0.895 0.010 85);
+  --ink: oklch(0.28 0.020 265); --ink-soft: oklch(0.50 0.018 265);
+  --ink-faint: oklch(0.64 0.014 265);
+  --todo: oklch(0.62 0.02 265); --doing: oklch(0.72 0.14 70); --done: oklch(0.64 0.13 150);
+}
+:root[data-theme="dark"] {
+  --bg: oklch(0.19 0.012 265); --surface: oklch(0.23 0.014 265);
+  --surface-2: oklch(0.27 0.016 265); --border: oklch(0.34 0.016 265);
+  --ink: oklch(0.93 0.012 85); --ink-soft: oklch(0.74 0.014 85);
+  --ink-faint: oklch(0.58 0.014 265);
+  --todo: oklch(0.70 0.02 265); --doing: oklch(0.78 0.13 70); --done: oklch(0.72 0.13 150);
+}
+
+* { box-sizing: border-box; margin: 0; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg);
+  color: var(--ink);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+header {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  padding: 1.4rem 1.6rem 0.9rem;
+}
+header h1 {
+  font-family: var(--mono);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+header h1::before { content: "▚ "; color: var(--doing); }
+header .sub {
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  color: var(--ink-faint);
+}
+header .spacer { flex: 1; }
+
+#theme {
+  font: inherit;
+  font-size: 0.78rem;
+  background: var(--surface);
+  color: var(--ink-soft);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.25rem 0.6rem;
+  cursor: pointer;
+  transition: color 0.15s var(--ease), border-color 0.15s var(--ease);
+}
+#theme:hover { color: var(--ink); border-color: var(--ink-faint); }
+
+.board {
+  display: flex;
+  gap: 1rem;
+  padding: 0.6rem 1.6rem 2rem;
+  overflow-x: auto;
+  align-items: flex-start;
+}
+
+.column { flex: 0 0 clamp(240px, 24vw, 320px); }
+
+.column > .head {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.15rem 0.7rem;
+}
+.column > .head .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent, var(--todo));
+}
+.column > .head .name {
+  font-family: var(--mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink);
+  text-transform: lowercase;
+}
+.column > .head .count {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+}
+
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 60px;
+  padding: 0.25rem;
+  border-radius: var(--radius);
+  transition: background 0.18s var(--ease);
+}
+.cards.drop-active { background: color-mix(in oklch, var(--accent) 12%, transparent); }
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.65rem 0.75rem;
+  cursor: grab;
+  transition: transform 0.16s var(--ease), border-color 0.16s var(--ease),
+              box-shadow 0.16s var(--ease);
+}
+.card:hover {
+  transform: translateY(-1px);
+  border-color: var(--accent, var(--ink-faint));
+  box-shadow: 0 2px 10px -6px oklch(0.2 0.02 265 / 0.4);
+}
+.card .title { font-size: 0.9rem; color: var(--ink); }
+.card .meta {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.4rem;
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  align-items: center;
+}
+.card .tag {
+  color: var(--ink-soft);
+  background: var(--surface-2);
+  padding: 0.05rem 0.35rem;
+  border-radius: 4px;
+}
+
+.empty {
+  font-family: var(--mono);
+  font-size: 0.75rem;
+  color: var(--ink-faint);
+  text-align: center;
+  padding: 1.1rem 0;
+  border: 1px dashed var(--border);
+  border-radius: var(--radius);
+}
+
+/* SortableJS drag states */
+.sortable-ghost { opacity: 0.35; }
+.sortable-chosen { cursor: grabbing; }
+.sortable-drag { box-shadow: 0 8px 24px -8px oklch(0.2 0.02 265 / 0.55); }
+
+.toast {
+  position: fixed;
+  bottom: 1.2rem; left: 50%;
+  transform: translateX(-50%) translateY(220%);
+  background: var(--ink);
+  color: var(--bg);
+  font-family: var(--mono);
+  font-size: 0.78rem;
+  padding: 0.5rem 0.9rem;
+  border-radius: var(--radius);
+  transition: transform 0.3s var(--ease);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.err { background: oklch(0.55 0.18 25); color: oklch(0.98 0.01 25); }

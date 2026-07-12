@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -9,6 +10,7 @@ import (
 
 	"github.com/vitor/kanren/internal/card"
 	"github.com/vitor/kanren/internal/store"
+	"github.com/vitor/kanren/internal/web"
 )
 
 // boardDir is the current directory; a board lives wherever kanren is run.
@@ -78,6 +80,24 @@ func cmdMv(args []string, stdout, stderr io.Writer) int {
 		return 1
 	}
 	fmt.Fprintf(stdout, "moved #%d to %s\n", id, args[1])
+	return 0
+}
+
+func cmdServe(args []string, _, stderr io.Writer) int {
+	fs := flag.NewFlagSet("serve", flag.ContinueOnError)
+	fs.SetOutput(stderr)
+	port := fs.Int("port", 7777, "port to listen on")
+	if err := fs.Parse(args); err != nil {
+		return 2
+	}
+	s, code := openStore(stderr)
+	if code != 0 {
+		return code
+	}
+	if err := web.Serve(s, *port); err != nil {
+		fmt.Fprintf(stderr, "kanren: %v\n", err)
+		return 1
+	}
 	return 0
 }
 

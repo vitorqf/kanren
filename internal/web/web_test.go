@@ -37,8 +37,9 @@ func newBoard(t *testing.T) (*httptest.Server, string, *store.Store) {
 	return ts, dir, s
 }
 
-// TestBoardRendersColumns: GET / lists the board's columns and cards (WEB-01).
-func TestBoardRendersColumns(t *testing.T) {
+// TestIndexServesShell: GET / serves the HTML board shell that loads the
+// client and its assets (WEB-01).
+func TestIndexServesShell(t *testing.T) {
 	t.Parallel()
 	ts, _, _ := newBoard(t)
 	resp, err := http.Get(ts.URL + "/")
@@ -46,10 +47,50 @@ func TestBoardRendersColumns(t *testing.T) {
 		t.Fatalf("GET /: %v", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
+	if ct := resp.Header.Get("Content-Type"); !strings.Contains(ct, "text/html") {
+		t.Errorf("content-type = %q, want text/html", ct)
+	}
 	body := readAll(t, resp)
-	for _, want := range []string{"todo", "doing", "done", "first", "second"} {
+	for _, want := range []string{"kanren", "/static/board.css", "/static/app.js", "/static/sortable.min.js"} {
 		if !strings.Contains(body, want) {
-			t.Errorf("board missing %q:\n%s", want, body)
+			t.Errorf("shell missing %q", want)
+		}
+	}
+}
+
+// TestListColumns: GET /api/columns returns the board's columns in order,
+// which drives the UI layout (WEB-01).
+func TestListColumns(t *testing.T) {
+	t.Parallel()
+	ts, _, _ := newBoard(t)
+	resp, err := http.Get(ts.URL + "/api/columns")
+	if err != nil {
+		t.Fatalf("GET /api/columns: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	var cols []string
+	if err := json.NewDecoder(resp.Body).Decode(&cols); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	want := []string{"todo", "doing", "done"}
+	if len(cols) != 3 || cols[0] != want[0] || cols[2] != want[2] {
+		t.Errorf("columns = %v, want %v", cols, want)
+	}
+}
+
+// TestStaticAssetsServed: embedded assets are reachable and non-empty (WEB-01).
+func TestStaticAssetsServed(t *testing.T) {
+	t.Parallel()
+	ts, _, _ := newBoard(t)
+	for _, path := range []string{"/static/board.css", "/static/app.js", "/static/sortable.min.js"} {
+		resp, err := http.Get(ts.URL + path)
+		if err != nil {
+			t.Fatalf("GET %s: %v", path, err)
+		}
+		body := readAll(t, resp)
+		_ = resp.Body.Close()
+		if resp.StatusCode != http.StatusOK || len(body) == 0 {
+			t.Errorf("%s: status %d, %d bytes", path, resp.StatusCode, len(body))
 		}
 	}
 }

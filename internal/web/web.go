@@ -5,9 +5,10 @@
 package web
 
 import (
+	"embed"
 	"encoding/json"
 	"fmt"
-	"html"
+	"io/fs"
 	"net"
 	"net/http"
 	"strconv"
@@ -15,6 +16,12 @@ import (
 
 	"github.com/vitor/kanren/internal/store"
 )
+
+// assetsFS holds the board UI (HTML, CSS, JS, vendored SortableJS), compiled
+// into the binary so kanren ships as a single file with no external requests.
+//
+//go:embed assets
+var assetsFS embed.FS
 
 // Server adapts a store to HTTP. Hold mu around every store call.
 type Server struct {
@@ -26,10 +33,31 @@ type Server struct {
 func Handler(s *store.Store) http.Handler {
 	srv := &Server{store: s}
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /{$}", srv.board)
+
+	// Serve embedded UI assets under /static/ (files live in assets/).
+	static, _ := fs.Sub(assetsFS, "assets")
+	mux.Handle("GET /static/", http.StripPrefix("/static/", http.FileServerFS(static)))
+
+	mux.HandleFunc("GET /{$}", srv.index)
+	mux.HandleFunc("GET /api/columns", srv.listColumns)
 	mux.HandleFunc("GET /api/cards", srv.listCards)
 	mux.HandleFunc("POST /api/cards/{id}/move", srv.moveCard)
 	return mux
+}
+
+// index serves the single-page board shell; data arrives via the JSON API.
+func (s *Server) index(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	http.ServeFileFS(w, r, assetsFS, "assets/index.html")
+}
+
+// listColumns returns the board's columns in order (drives UI layout).
+func (s *Server) listColumns(w http.ResponseWriter, _ *http.Request) {
+	s.mu.Lock()
+	cols := s.store.Columns()
+	s.mu.Unlock()
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(cols)
 }
 
 // Serve starts the board server on port, returning a clear error if the port is
@@ -92,26 +120,3 @@ func (s *Server) moveCard(w http.ResponseWriter, r *http.Request) {
 	_ = json.NewEncoder(w).Encode(card)
 }
 
-// board renders a minimal server-side board. T9 replaces this with embedded
-// assets, SortableJS drag-drop, and an impeccable visual pass.
-func (s *Server) board(w http.ResponseWriter, _ *http.Request) {
-	s.mu.Lock()
-	cols := s.store.Columns()
-	byCol := map[string][]string{}
-	for _, col := range cols {
-		for _, c := range s.store.List(store.Filter{Status: col}) {
-			byCol[col] = append(byCol[col], c.Title)
-		}
-	}
-	s.mu.Unlock()
-
-	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprint(w, "<!doctype html><meta charset=utf-8><title>kanren</title><h1>kanren</h1>")
-	for _, col := range cols {
-		fmt.Fprintf(w, "<section><h2>%s</h2><ul>", html.EscapeString(col))
-		for _, title := range byCol[col] {
-			fmt.Fprintf(w, "<li>%s</li>", html.EscapeString(title))
-		}
-		fmt.Fprint(w, "</ul></section>")
-	}
-}
