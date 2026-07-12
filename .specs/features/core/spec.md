@@ -4,7 +4,7 @@
 
 ## Problem Statement
 
-Devs distrust cloud kanban lock-in and want to own their task data as plain text alongside code. Existing OSS boards need a server/DB, hide data behind app-specific formats, or lack a real board UI (todo.txt, taskell) — none give a per-card markdown store that a CLI *and* a visual board both drive over the same files, with git as the sync/history layer.
+Devs distrust cloud kanban lock-in and want to own their task data as plain text alongside code. Existing OSS boards need a server/DB, hide data behind app-specific formats, or lack a real board UI (todo.txt, taskell) — none give a per-card markdown store that a CLI _and_ a visual board both drive over the same files, with git as the sync/history layer.
 
 ## Goals
 
@@ -16,31 +16,31 @@ Devs distrust cloud kanban lock-in and want to own their task data as plain text
 
 ## Out of Scope
 
-| Feature | Reason |
-| ------- | ------ |
-| Cloud sync / hosted service | Reputation-only, no revenue; git *is* the sync layer |
-| Auth / multi-user accounts | Single-user local tool; git handles collaboration |
-| Real-time multiplayer / websockets live-collab | Overkill for MVP; git merge is the model |
-| Mobile app | Desktop/terminal dev tool |
-| Automatic conflict *resolution* | Git owns merges; app must not silently rewrite |
-| Card comments / attachments / due-date reminders | Post-MVP; keep card format minimal |
-| `// TODO:` code scanning, PR/commit card links | Great P3+ ideas, not core loop |
+| Feature                                          | Reason                                               |
+| ------------------------------------------------ | ---------------------------------------------------- |
+| Cloud sync / hosted service                      | Reputation-only, no revenue; git _is_ the sync layer |
+| Auth / multi-user accounts                       | Single-user local tool; git handles collaboration    |
+| Real-time multiplayer / websockets live-collab   | Overkill for MVP; git merge is the model             |
+| Mobile app                                       | Desktop/terminal dev tool                            |
+| Automatic conflict _resolution_                  | Git owns merges; app must not silently rewrite       |
+| Card comments / attachments / due-date reminders | Post-MVP; keep card format minimal                   |
+| `// TODO:` code scanning, PR/commit card links   | Great P3+ ideas, not core loop                       |
 
 ---
 
 ## Assumptions & Open Questions
 
-| Assumption / decision | Chosen default | Rationale | Confirmed? |
-| --------------------- | -------------- | --------- | ---------- |
-| Language/stack | Go single binary, embedded web via `embed.FS` | One binary for CLI+web, easy cross-compile, mature YAML/HTTP libs | n |
-| Status stored where | YAML frontmatter `status:` field | Cleaner diffs, easier query, move = 1 field edit (user-picked) | y |
-| Board UI form | Local web served on `localhost`, drag-drop | User-picked; demos/screenshots well for reputation | y |
-| Card filename / ID | `NNNN-slug.md` (zero-padded incrementing id + slug) | Stable ID for references, human-readable, sortable | n |
-| Concurrency between CLI + open web | Last-write-wins on file; web watches fs + reloads | Single user, no locking needed; simple | n |
-| Ordering within a column | `order:` float field in frontmatter | Reorder without rewriting neighbors; sparse indexing | n |
-| Column set definition | `.kanren.yml` at board root lists columns | Explicit, versioned with board | n |
-| Concurrent edit conflict | App never auto-merges; git surfaces conflicts | "Automatic resolution" is out of scope | y |
-| **Name `kanren`** | Working name; collides with miniKanren logic lib | ⚠️ Reputation/SEO risk — revisit before public launch | **n** |
+| Assumption / decision              | Chosen default                                      | Rationale                                                         | Confirmed? |
+| ---------------------------------- | --------------------------------------------------- | ----------------------------------------------------------------- | ---------- |
+| Language/stack                     | Go single binary, embedded web via `embed.FS`       | One binary for CLI+web, easy cross-compile, mature YAML/HTTP libs | n          |
+| Status stored where                | YAML frontmatter `status:` field                    | Cleaner diffs, easier query, move = 1 field edit (user-picked)    | y          |
+| Board UI form                      | Local web served on `localhost`, drag-drop          | User-picked; demos/screenshots well for reputation                | y          |
+| Card filename / ID                 | `NNNN-slug.md` (zero-padded incrementing id + slug) | Stable ID for references, human-readable, sortable                | n          |
+| Concurrency between CLI + open web | Last-write-wins on file; web watches fs + reloads   | Single user, no locking needed; simple                            | n          |
+| Ordering within a column           | `order:` float field in frontmatter                 | Reorder without rewriting neighbors; sparse indexing              | n          |
+| Column set definition              | `.kanren.yml` at board root lists columns           | Explicit, versioned with board                                    | n          |
+| Concurrent edit conflict           | App never auto-merges; git surfaces conflicts       | "Automatic resolution" is out of scope                            | y          |
+| **Name `kanren`**                  | Working name; collides with miniKanren logic lib    | ⚠️ Reputation/SEO risk — revisit before public launch             | **n**      |
 
 **Open questions:** Name collision (kanren ↔ miniKanren) unresolved — flagged for decision before public release. All others defaulted above.
 
@@ -101,7 +101,7 @@ Devs distrust cloud kanban lock-in and want to own their task data as plain text
 
 ### P1: Query cards like a DB ⭐ MVP
 
-**User Story**: As a dev, I want `kanren ls --status doing --tag urgent --assignee vitor`, so I can slice the board like a database.
+**User Story**: As a dev, I want `kanren ls --status doing --tag urgent --assignee vitorqf`, so I can slice the board like a database.
 
 **Why P1**: A headline differentiator; drives scripting/automation.
 
@@ -169,31 +169,31 @@ Devs distrust cloud kanban lock-in and want to own their task data as plain text
 
 ## Requirement Traceability
 
-| Requirement ID | Story | Phase | Status |
-| -------------- | ----- | ----- | ------ |
-| CI-01 | P1: CI/CD | Design | Pending |
-| CI-02 | P1: CI/CD | Design | Pending |
-| CI-03 | P1: CI/CD | Design | Pending |
-| CI-04 | P1: CI/CD (release) | Design | Pending |
-| CARD-01 | P1: Card model | Design | Pending |
-| CARD-02 | P1: Card model | Design | Pending |
-| CARD-03 | P1: Card model | Design | Pending |
-| CARD-04 | P1: Card model | Design | Pending |
-| CLI-01 | P1: CLI | Design | Pending |
-| CLI-02 | P1: CLI | Design | Pending |
-| CLI-03 | P1: CLI | Design | Pending |
-| CLI-04 | P1: CLI | Design | Pending |
-| QRY-01 | P1: Query | Design | Pending |
-| QRY-02 | P1: Query | Design | Pending |
-| QRY-03 | P1: Query | Design | Pending |
-| QRY-04 | P1: Query | Design | Pending |
-| WEB-01 | P1: Web board | Design | Pending |
-| WEB-02 | P1: Web board | Design | Pending |
-| WEB-03 | P1: Web board | Design | Pending |
-| WEB-04 | P1: Web board | Design | Pending |
-| INIT-01 | P2: Init | - | Pending |
-| INIT-02 | P2: Init | - | Pending |
-| EDIT-01 | P3: Editor | - | Pending |
+| Requirement ID | Story               | Phase  | Status  |
+| -------------- | ------------------- | ------ | ------- |
+| CI-01          | P1: CI/CD           | Design | Pending |
+| CI-02          | P1: CI/CD           | Design | Pending |
+| CI-03          | P1: CI/CD           | Design | Pending |
+| CI-04          | P1: CI/CD (release) | Design | Pending |
+| CARD-01        | P1: Card model      | Design | Pending |
+| CARD-02        | P1: Card model      | Design | Pending |
+| CARD-03        | P1: Card model      | Design | Pending |
+| CARD-04        | P1: Card model      | Design | Pending |
+| CLI-01         | P1: CLI             | Design | Pending |
+| CLI-02         | P1: CLI             | Design | Pending |
+| CLI-03         | P1: CLI             | Design | Pending |
+| CLI-04         | P1: CLI             | Design | Pending |
+| QRY-01         | P1: Query           | Design | Pending |
+| QRY-02         | P1: Query           | Design | Pending |
+| QRY-03         | P1: Query           | Design | Pending |
+| QRY-04         | P1: Query           | Design | Pending |
+| WEB-01         | P1: Web board       | Design | Pending |
+| WEB-02         | P1: Web board       | Design | Pending |
+| WEB-03         | P1: Web board       | Design | Pending |
+| WEB-04         | P1: Web board       | Design | Pending |
+| INIT-01        | P2: Init            | -      | Pending |
+| INIT-02        | P2: Init            | -      | Pending |
+| EDIT-01        | P3: Editor          | -      | Pending |
 
 **ID format:** `[CATEGORY]-[NUMBER]`
 **Status values:** Pending → In Design → In Tasks → Implementing → Verified

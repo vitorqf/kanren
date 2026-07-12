@@ -30,7 +30,7 @@ kanren ls --status doing --tag urgent  # query like a database
 With Go installed:
 
 ```sh
-go install github.com/vitor/kanren/cmd/kanren@latest
+go install github.com/vitorqf/kanren/cmd/kanren@latest
 ```
 
 Or download a prebuilt binary from the [releases page](../../releases) and put it
@@ -49,9 +49,10 @@ status: doing
 tags:
   - bug
   - urgent
-assignee: vitor
+assignee: vitorqf
 created: 2026-07-12
 ---
+
 # fix auth token expiry
 
 Check uses `<` not `<=`.
@@ -69,16 +70,16 @@ cards_dir: cards
 
 ## Commands
 
-| Command | What it does |
-| --- | --- |
-| `kanren serve [--port N]` | Open the local drag-drop board (auto-creates a board if none) |
-| `kanren init` | Create a board in the current directory |
-| `kanren add "<title>"` | Add a card to the first column |
-| `kanren ls` | List cards grouped by column |
-| `kanren ls --status <col> --tag <t> --assignee <who>` | Filtered list (all filters combine) |
-| `kanren ls --json` | Machine-readable output for scripts |
-| `kanren mv <id> <status>` | Move a card to another column |
-| `kanren edit <id>` | Open a card in `$EDITOR` |
+| Command                                               | What it does                                                  |
+| ----------------------------------------------------- | ------------------------------------------------------------- |
+| `kanren serve [--port N]`                             | Open the local drag-drop board (auto-creates a board if none) |
+| `kanren init`                                         | Create a board in the current directory                       |
+| `kanren add "<title>"`                                | Add a card to the first column                                |
+| `kanren ls`                                           | List cards grouped by column                                  |
+| `kanren ls --status <col> --tag <t> --assignee <who>` | Filtered list (all filters combine)                           |
+| `kanren ls --json`                                    | Machine-readable output for scripts                           |
+| `kanren mv <id> <status>`                             | Move a card to another column                                 |
+| `kanren edit <id>`                                    | Open a card in `$EDITOR`                                      |
 
 ## Why plain files
 

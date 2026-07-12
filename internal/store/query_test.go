@@ -5,7 +5,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/vitor/kanren/internal/card"
+	"github.com/vitorqf/kanren/internal/card"
 )
 
 // seed adds cards with tags/assignee for query tests.
@@ -15,9 +15,9 @@ func seed(t *testing.T, s *Store) {
 		title, status, assignee string
 		tags                    []string
 	}{
-		{"a", "doing", "vitor", []string{"bug", "urgent"}},
+		{"a", "doing", "vitorqf", []string{"bug", "urgent"}},
 		{"b", "doing", "ana", []string{"urgent"}},
-		{"c", "todo", "vitor", []string{"chore"}},
+		{"c", "todo", "vitorqf", []string{"chore"}},
 	}
 	for _, sp := range specs {
 		c, err := s.Add(sp.title)
@@ -37,7 +37,7 @@ func TestListAndFilter(t *testing.T) {
 	s := openBoard(t)
 	seed(t, s)
 
-	got := s.List(Filter{Status: "doing", Tag: "urgent", Assignee: "vitor"})
+	got := s.List(Filter{Status: "doing", Tag: "urgent", Assignee: "vitorqf"})
 	if len(got) != 1 || got[0].Title != "a" {
 		t.Fatalf("AND filter = %v, want single card 'a'", titles(got))
 	}

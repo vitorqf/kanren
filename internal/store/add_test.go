@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vitor/kanren/internal/card"
+	"github.com/vitorqf/kanren/internal/card"
 )
 
 // openBoard is a test helper: init + open a fresh board.

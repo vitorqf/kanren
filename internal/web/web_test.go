@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vitor/kanren/internal/card"
-	"github.com/vitor/kanren/internal/store"
+	"github.com/vitorqf/kanren/internal/card"
+	"github.com/vitorqf/kanren/internal/store"
 )
 
 // newBoard inits a board with two cards and returns an httptest server + dir.

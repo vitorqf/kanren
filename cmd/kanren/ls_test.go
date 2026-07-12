@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/vitor/kanren/internal/card"
+	"github.com/vitorqf/kanren/internal/card"
 )
 
 // seedCards adds three cards and tags/assigns them via a second store write,

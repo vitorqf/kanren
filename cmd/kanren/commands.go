@@ -8,9 +8,9 @@ import (
 	"os/exec"
 	"strconv"
 
-	"github.com/vitor/kanren/internal/card"
-	"github.com/vitor/kanren/internal/store"
-	"github.com/vitor/kanren/internal/web"
+	"github.com/vitorqf/kanren/internal/card"
+	"github.com/vitorqf/kanren/internal/store"
+	"github.com/vitorqf/kanren/internal/web"
 )
 
 // boardDir is the current directory; a board lives wherever kanren is run.

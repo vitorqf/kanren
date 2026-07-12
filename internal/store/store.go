@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/goccy/go-yaml"
-	"github.com/vitor/kanren/internal/card"
+	"github.com/vitorqf/kanren/internal/card"
 )
 
 // ConfigName is the board config file at the board root.

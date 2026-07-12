@@ -54,7 +54,7 @@ func TestRoundTrip(t *testing.T) {
 	cases := map[string]Card{
 		"full": {
 			ID: 12, Title: "Fix auth token expiry", Status: "doing",
-			Tags: []string{"bug", "urgent"}, Assignee: "vitor",
+			Tags: []string{"bug", "urgent"}, Assignee: "vitorqf",
 			Created: "2026-07-12", Order: 2,
 			Body: "# Fix auth token expiry\n\nCheck uses `<` not `<=`.\n",
 		},

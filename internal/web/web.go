@@ -15,7 +15,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/vitor/kanren/internal/store"
+	"github.com/vitorqf/kanren/internal/store"
 )
 
 // assetsFS holds the board UI (HTML, CSS, JS, vendored SortableJS), compiled

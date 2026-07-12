@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/vitor/kanren/internal/card"
+	"github.com/vitorqf/kanren/internal/card"
 )
 
 // Filter selects cards by field. A zero (empty) field matches any value; when

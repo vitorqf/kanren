@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/vitor/kanren/internal/card"
-	"github.com/vitor/kanren/internal/store"
+	"github.com/vitorqf/kanren/internal/card"
+	"github.com/vitorqf/kanren/internal/store"
 )
 
 // cmdLs lists cards, optionally filtered. With --json it emits a machine-
