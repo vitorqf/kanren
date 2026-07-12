@@ -20,14 +20,14 @@ const delim = "---"
 // goccy/go-yaml preserves struct field order on Marshal, which keeps card
 // edits to minimal, deterministic git diffs (AD-002).
 type Card struct {
-	ID       int      `yaml:"id"`
-	Title    string   `yaml:"title"`
-	Status   string   `yaml:"status"`
-	Tags     []string `yaml:"tags,omitempty"`
-	Assignee string   `yaml:"assignee,omitempty"`
-	Created  string   `yaml:"created,omitempty"`
-	Order    float64  `yaml:"order,omitempty"`
-	Body     string   `yaml:"-"`
+	ID       int      `yaml:"id" json:"id"`
+	Title    string   `yaml:"title" json:"title"`
+	Status   string   `yaml:"status" json:"status"`
+	Tags     []string `yaml:"tags,omitempty" json:"tags,omitempty"`
+	Assignee string   `yaml:"assignee,omitempty" json:"assignee,omitempty"`
+	Created  string   `yaml:"created,omitempty" json:"created,omitempty"`
+	Order    float64  `yaml:"order,omitempty" json:"order,omitempty"`
+	Body     string   `yaml:"-" json:"body,omitempty"`
 }
 
 // Parse decodes a card file's bytes into a Card. It reads only the first

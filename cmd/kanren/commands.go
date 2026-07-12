@@ -59,31 +59,6 @@ func cmdAdd(args []string, stdout, stderr io.Writer) int {
 	return 0
 }
 
-func cmdLs(args []string, stdout, stderr io.Writer) int {
-	if len(args) != 0 {
-		fmt.Fprintln(stderr, "usage: kanren ls  (filters land in T7)")
-		return 2
-	}
-	s, code := openStore(stderr)
-	if code != 0 {
-		return code
-	}
-	for _, col := range s.Columns() {
-		cards := s.List(store.Filter{Status: col})
-		fmt.Fprintf(stdout, "\n%s (%d)\n", col, len(cards))
-		for _, c := range cards {
-			fmt.Fprintf(stdout, "  #%-3d %s\n", c.ID, c.Title)
-		}
-	}
-	if mis := s.Misfiled(); len(mis) > 0 {
-		fmt.Fprintf(stdout, "\n⚠ misfiled (%d)\n", len(mis))
-		for _, c := range mis {
-			fmt.Fprintf(stdout, "  #%-3d %s  [status: %s]\n", c.ID, c.Title, c.Status)
-		}
-	}
-	return 0
-}
-
 func cmdMv(args []string, stdout, stderr io.Writer) int {
 	if len(args) != 2 {
 		fmt.Fprintln(stderr, "usage: kanren mv <id> <status>")
