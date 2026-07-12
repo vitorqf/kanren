@@ -1,4 +1,4 @@
-module github.com/vitor/kanren
+module github.com/vitorqf/kanren
 
 go 1.26.4
 
