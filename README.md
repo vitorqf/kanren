@@ -4,6 +4,8 @@ Plain-text, git-backed kanban. Every card is a markdown file. A local board and
 a CLI edit the **same files**, so you own your tasks as plain text next to your
 code, with git as history and sync. No server, no database, no account.
 
+**[Quick start](#quick-start) · [Install](#install) · [Card format](#what-a-card-looks-like) · [Commands](#commands) · [Why plain files](#why-plain-files) · [How it works](#how-it-works) · [Releasing](#releasing)**
+
 ## Quick start
 
 One command. It creates a board if there isn't one and opens it in your browser.
@@ -96,6 +98,21 @@ access, so they can never disagree. Moving a card rewrites only its `status`
 line, keeping git diffs minimal. The board watches the `cards/` folder and
 refreshes live when files change, so a CLI edit or a `git pull` shows up without
 a reload.
+
+## Releasing
+
+Releases are cut by pushing a git tag. The `Release` workflow then
+cross-compiles binaries for linux, macOS, and Windows (amd64 + arm64) and
+attaches them to a GitHub Release.
+
+```sh
+git tag v0.1.0        # use the next semver, prefixed with v
+git push origin v0.1.0
+```
+
+The version is baked into the binary from the tag, so `kanren version` reports
+it. Check progress with `gh run watch` or the repo's Actions tab; the release
+appears under **Releases** when the job finishes.
 
 ## License
 
