@@ -5,10 +5,46 @@ import (
 	"testing"
 )
 
-// TestSlugifyPlaceholder keeps the scaffold green until T2 replaces it.
-func TestSlugifyPlaceholder(t *testing.T) {
-	if got := Slugify("fix bug"); got == "" {
-		t.Fatal("Slugify returned empty")
+// TestSlugify: filename-safe slugs, unicode/punctuation collapsed, empty
+// falls back (CARD-01).
+func TestSlugify(t *testing.T) {
+	t.Parallel()
+	cases := map[string]string{
+		"Fix bug":               "fix-bug",
+		"Fix   auth  expiry!!!": "fix-auth-expiry",
+		"  trim me  ":           "trim-me",
+		"CamelCase Title":       "camelcase-title",
+		"under_score/slash":     "under-score-slash",
+		"café münchen":          "caf-m-nchen",
+		"":                      "card",
+		"!!!":                   "card",
+		"v2.0-release":          "v2-0-release",
+	}
+	for in, want := range cases {
+		if got := Slugify(in); got != want {
+			t.Errorf("Slugify(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+// TestFilename: zero-padded id + slug + .md (CARD-01).
+func TestFilename(t *testing.T) {
+	t.Parallel()
+	cases := []struct {
+		id    int
+		title string
+		want  string
+	}{
+		{12, "Fix bug", "0012-fix-bug.md"},
+		{1, "t", "0001-t.md"},
+		{9999, "big", "9999-big.md"},
+		{12345, "overflow", "12345-overflow.md"},
+		{7, "", "0007-card.md"},
+	}
+	for _, c := range cases {
+		if got := Filename(c.id, c.title); got != c.want {
+			t.Errorf("Filename(%d, %q) = %q, want %q", c.id, c.title, got, c.want)
+		}
 	}
 }
 

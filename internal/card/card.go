@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/goccy/go-yaml"
 )
@@ -88,8 +89,34 @@ func (c Card) Marshal() ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// Slugify converts a title into a filename-safe slug. Full implementation
-// lands in T2; kept as a placeholder so the scaffold test stays green.
+// Slugify converts a title into a filename-safe slug: lowercase ASCII letters
+// and digits, every other run collapsed to a single hyphen, no leading or
+// trailing hyphen. An empty result falls back to "card" so a filename is
+// always producible (CARD-01).
 func Slugify(title string) string {
-	return title
+	var b strings.Builder
+	prevHyphen := false
+	for _, r := range strings.ToLower(title) {
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
+			b.WriteRune(r)
+			prevHyphen = false
+		default:
+			if !prevHyphen && b.Len() > 0 {
+				b.WriteByte('-')
+				prevHyphen = true
+			}
+		}
+	}
+	slug := strings.TrimRight(b.String(), "-")
+	if slug == "" {
+		return "card"
+	}
+	return slug
+}
+
+// Filename returns the on-disk card filename: a zero-padded id plus slug,
+// e.g. Filename(12, "Fix bug") == "0012-fix-bug.md" (CARD-01).
+func Filename(id int, title string) string {
+	return fmt.Sprintf("%04d-%s.md", id, Slugify(title))
 }
