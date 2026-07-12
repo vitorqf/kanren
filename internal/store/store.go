@@ -149,13 +149,13 @@ func (s *Store) Count() int { return len(s.cards) }
 
 // nextID returns one past the highest indexed id (ids start at 1).
 func (s *Store) nextID() int {
-	max := 0
+	highest := 0
 	for id := range s.cards {
-		if id > max {
-			max = id
+		if id > highest {
+			highest = id
 		}
 	}
-	return max + 1
+	return highest + 1
 }
 
 // Add creates a new card titled title in the leftmost column, assigns it the
