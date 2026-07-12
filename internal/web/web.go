@@ -48,9 +48,41 @@ func Handler(s *store.Store) http.Handler {
 	mux.HandleFunc("GET /api/columns", srv.listColumns)
 	mux.HandleFunc("GET /api/cards", srv.listCards)
 	mux.HandleFunc("POST /api/cards", srv.createCard)
+	mux.HandleFunc("PUT /api/cards/{id}", srv.updateCard)
 	mux.HandleFunc("POST /api/cards/{id}/move", srv.moveCard)
 	mux.HandleFunc("GET /events", srv.events)
 	return mux
+}
+
+// updateCard edits a card's content (title, body/description, tags, assignee)
+// from the web UI. Body is JSON; id/status/order are preserved. Reuses
+// store.Update (WEB-04: identical files to a hand edit).
+func (s *Server) updateCard(w http.ResponseWriter, r *http.Request) {
+	id, err := strconv.Atoi(r.PathValue("id"))
+	if err != nil {
+		http.Error(w, "invalid id", http.StatusBadRequest)
+		return
+	}
+	var body struct {
+		Title    string   `json:"title"`
+		Body     string   `json:"body"`
+		Tags     []string `json:"tags"`
+		Assignee string   `json:"assignee"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "invalid JSON body", http.StatusBadRequest)
+		return
+	}
+
+	s.mu.Lock()
+	c, err := s.store.Update(id, body.Title, body.Body, body.Tags, body.Assignee)
+	s.mu.Unlock()
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(c)
 }
 
 // createCard adds a card from the web UI so the board is usable without the

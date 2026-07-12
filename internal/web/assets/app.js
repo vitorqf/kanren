@@ -94,14 +94,102 @@ function focusAdd(status) {
 function cardEl(card) {
   const node = el("article", "card");
   node.dataset.id = card.id;
+  node._card = card; // stash full data for the editor
+
   node.append(textEl("div", "title", card.title));
+
+  const desc = descriptionPreview(card.body);
+  if (desc) node.append(textEl("p", "desc", desc));
 
   const meta = el("div", "meta");
   meta.append(textEl("span", "id", `#${card.id}`));
   for (const tag of card.tags || []) meta.append(textEl("span", "tag", tag));
   if (card.assignee) meta.append(textEl("span", "who", `@${card.assignee}`));
   node.append(meta);
+
+  node.addEventListener("click", (e) => {
+    if (node.classList.contains("editing")) return;
+    if (e.target.closest("a")) return;
+    openEditor(node);
+  });
   return node;
+}
+
+// descriptionPreview strips a leading markdown heading that just repeats the
+// title, returning the first meaningful lines of the body.
+function descriptionPreview(body) {
+  if (!body) return "";
+  return body
+    .split("\n")
+    .filter((l) => !/^#{1,6}\s/.test(l))
+    .join("\n")
+    .trim();
+}
+
+// openEditor swaps a card into an inline edit form for title, description,
+// tags, and assignee. Saving PUTs to /api/cards/{id}.
+function openEditor(node) {
+  const card = node._card;
+  node.classList.add("editing");
+  node.replaceChildren();
+
+  const form = el("form", "editor");
+  const title = fieldInput("title", card.title);
+  const desc = el("textarea", "f-desc");
+  desc.value = descriptionPreview(card.body);
+  desc.placeholder = "description (markdown)";
+  desc.rows = 4;
+  const tags = fieldInput("tags", (card.tags || []).join(", "));
+  tags.placeholder = "tags, comma separated";
+  const who = fieldInput("assignee", card.assignee || "");
+  who.placeholder = "assignee";
+
+  const actions = el("div", "editor-actions");
+  const save = button("save", "primary");
+  const cancel = button("cancel", "ghost");
+  actions.append(save, cancel);
+
+  form.append(labeled("title", title), labeled("description", desc),
+    labeled("tags", tags), labeled("assignee", who), actions);
+  node.append(form);
+  title.focus();
+
+  cancel.addEventListener("click", (e) => { e.preventDefault(); load(); });
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    await update(card.id, {
+      title: title.value.trim() || card.title,
+      body: buildBody(title.value.trim() || card.title, desc.value),
+      tags: splitTags(tags.value),
+      assignee: who.value.trim(),
+    });
+  });
+}
+
+// buildBody keeps the card body as a markdown doc with an H1 title followed by
+// the description, matching the CLI-created shape.
+function buildBody(title, description) {
+  const body = description.trim();
+  return body ? `# ${title}\n\n${body}\n` : "";
+}
+
+function splitTags(raw) {
+  return raw.split(",").map((t) => t.trim()).filter(Boolean);
+}
+
+async function update(id, fields) {
+  try {
+    const resp = await fetch(`/api/cards/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(fields),
+    });
+    if (!resp.ok) throw new Error(await resp.text());
+    toast(`saved #${id}`);
+    await load();
+  } catch (err) {
+    toast(String(err).slice(0, 80), true);
+  }
 }
 
 function makeSortable(list) {
@@ -112,6 +200,9 @@ function makeSortable(list) {
     ghostClass: "sortable-ghost",
     chosenClass: "sortable-chosen",
     dragClass: "sortable-drag",
+    // Never drag a card that is being edited, nor its form controls.
+    filter: ".editing, input, textarea, button",
+    preventOnFilter: false,
     onAdd: (evt) => {
       list.classList.remove("drop-active");
       move(evt.item.dataset.id, list.dataset.status);
@@ -157,6 +248,23 @@ function textEl(tag, cls, text) {
   const n = el(tag, cls);
   n.textContent = text;
   return n;
+}
+function fieldInput(name, value) {
+  const n = el("input", `f-${name}`);
+  n.type = "text";
+  n.value = value;
+  return n;
+}
+function labeled(label, control) {
+  const wrap = el("label", "field");
+  wrap.append(textEl("span", "field-label", label), control);
+  return wrap;
+}
+function button(text, variant) {
+  const b = el("button", `btn ${variant}`);
+  b.type = text === "save" ? "submit" : "button";
+  b.textContent = text;
+  return b;
 }
 
 let toastTimer;

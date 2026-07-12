@@ -174,6 +174,62 @@ func TestCreateCard(t *testing.T) {
 	}
 }
 
+// TestUpdateCard: PUT edits description, tags, and assignee, persisting them to
+// the card file so the web shows them back (addresses missing body/tags on web).
+func TestUpdateCard(t *testing.T) {
+	t.Parallel()
+	ts, dir, _ := newBoard(t)
+
+	payload := `{"title":"first","body":"# first\n\ndo the thing\n","tags":["bug","p1"],"assignee":"vitorqf"}`
+	req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/cards/1", strings.NewReader(payload))
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("put: %v", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("update status = %d, want 200", resp.StatusCode)
+	}
+
+	onDisk := parseCard(t, filepath.Join(dir, "cards", "0001-first.md"))
+	if !strings.Contains(onDisk.Body, "do the thing") {
+		t.Errorf("body not persisted: %q", onDisk.Body)
+	}
+	if len(onDisk.Tags) != 2 || onDisk.Tags[0] != "bug" {
+		t.Errorf("tags not persisted: %v", onDisk.Tags)
+	}
+	if onDisk.Assignee != "vitorqf" {
+		t.Errorf("assignee not persisted: %q", onDisk.Assignee)
+	}
+	// Status/order untouched by a content edit.
+	if onDisk.Status != "todo" {
+		t.Errorf("status changed by content edit: %q", onDisk.Status)
+	}
+}
+
+// TestUpdateRenamesFileNoOrphan: editing the title renames the file and leaves
+// no orphan behind (the title-rename edge).
+func TestUpdateRenamesFileNoOrphan(t *testing.T) {
+	t.Parallel()
+	ts, dir, _ := newBoard(t)
+
+	payload := `{"title":"renamed card","body":"","tags":[],"assignee":""}`
+	req, _ := http.NewRequest(http.MethodPut, ts.URL+"/api/cards/1", strings.NewReader(payload))
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("put: %v", err)
+	}
+	_ = resp.Body.Close()
+
+	if _, err := os.Stat(filepath.Join(dir, "cards", "0001-first.md")); !os.IsNotExist(err) {
+		t.Error("old file still present after rename (orphan)")
+	}
+	if _, err := os.Stat(filepath.Join(dir, "cards", "0001-renamed-card.md")); err != nil {
+		t.Errorf("renamed file missing: %v", err)
+	}
+}
+
 // TestCreateCardRequiresTitle: an empty title is rejected (web create edge).
 func TestCreateCardRequiresTitle(t *testing.T) {
 	t.Parallel()

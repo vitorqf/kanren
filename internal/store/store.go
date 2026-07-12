@@ -217,7 +217,8 @@ func (s *Store) Path(c card.Card) string {
 
 // Save writes c to disk and updates the in-memory index. The filename derives
 // from the card's id and title, so the written file round-trips through
-// card.Parse identically.
+// card.Parse identically. When a title change renames the file, the old file is
+// removed so no orphan is left behind.
 func (s *Store) Save(c card.Card) error {
 	data, err := c.Marshal()
 	if err != nil {
@@ -226,10 +227,34 @@ func (s *Store) Save(c card.Card) error {
 	if err := os.MkdirAll(filepath.Join(s.dir, s.cfg.CardsDir), 0o755); err != nil {
 		return fmt.Errorf("store: create cards dir: %w", err)
 	}
+	newName := card.Filename(c.ID, c.Title)
 	if err := os.WriteFile(s.Path(c), data, 0o644); err != nil {
 		return fmt.Errorf("store: write card %d: %w", c.ID, err)
 	}
+	if old, ok := s.files[c.ID]; ok && old != newName {
+		_ = os.Remove(filepath.Join(s.dir, s.cfg.CardsDir, old))
+	}
 	s.cards[c.ID] = c
-	s.files[c.ID] = card.Filename(c.ID, c.Title)
+	s.files[c.ID] = newName
 	return nil
+}
+
+// Update applies edited fields to a card and persists it, keeping id, status,
+// and order intact. It is the single entry point for editing card content
+// (title, body, tags, assignee) from any adapter.
+func (s *Store) Update(id int, title, body string, tags []string, assignee string) (card.Card, error) {
+	c, err := s.Get(id)
+	if err != nil {
+		return card.Card{}, err
+	}
+	if strings.TrimSpace(title) != "" {
+		c.Title = title
+	}
+	c.Body = body
+	c.Tags = tags
+	c.Assignee = assignee
+	if err := s.Save(c); err != nil {
+		return card.Card{}, err
+	}
+	return c, nil
 }
