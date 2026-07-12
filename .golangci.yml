@@ -9,6 +9,14 @@ linters:
     - unused
     - misspell
     - revive
+  settings:
+    errcheck:
+      # Writes to user-facing stdout/stderr have nothing actionable to do on
+      # error; ignoring them is idiomatic for a CLI.
+      exclude-functions:
+        - fmt.Fprint
+        - fmt.Fprintf
+        - fmt.Fprintln
 
 run:
   timeout: 3m
